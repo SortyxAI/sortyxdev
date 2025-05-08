@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waste Classification</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Waste Classification</h1>
+    <div class="container">
+        <div class="upload-area">
+            <h2>Upload Image for Classification</h2>
+            <input type="file" id="imageUpload" accept="image/*">
+            <button id="predictButton">Predict Waste</button>
+            <p id="status"></p>
+        </div>
+        <div class="prediction-area">
+            <h2>Prediction</h2>
+            <p id="prediction-result">Upload an image and click "Predict Waste".</p>
+            <p id="confidence">Confidence: -</p>
+            <div class="bins-container">
+                <div class="bin" id="Hazardous">
+                    <span>Hazardous</span>
+                    <div class="arrow" id="arrow-Hazardous">⬇️</div>
+                </div>
+                <div class="bin" id="Non-Recyclable">
+                    <span>Non-Recyclable</span>
+                    <div class="arrow" id="arrow-Non-Recyclable">⬇️</div>
+                </div>
+                <div class="bin" id="Organic">
+                    <span>Organic</span>
+                    <div class="arrow" id="arrow-Organic">⬇️</div>
+                </div>
+                <div class="bin" id="Recyclable">
+                    <span>Recyclable</span>
+                    <div class="arrow" id="arrow-Recyclable">⬇️</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const imageUpload = document.getElementById('imageUpload');
+        const predictButton = document.getElementById('predictButton');
+        const statusElement = document.getElementById('status');
+        const predictionResultElement = document.getElementById('prediction-result');
+        const confidenceElement = document.getElementById('confidence');
+        const bins = {
+            Hazardous: document.getElementById('Hazardous'),
+            'Non-Recyclable': document.getElementById('Non-Recyclable'),
+            Organic: document.getElementById('Organic'),
+            Recyclable: document.getElementById('Recyclable')
+        };
+        const arrows = {
+            Hazardous: document.getElementById('arrow-Hazardous'),
+            'Non-Recyclable': document.getElementById('arrow-Non-Recyclable'),
+            Organic: document.getElementById('arrow-Organic'),
+            Recyclable: document.getElementById('arrow-Recyclable')
+        };
+
+        predictButton.addEventListener('click', async () => {
+            const file = imageUpload.files[0];
+            if (!file) {
+                statusElement.textContent = 'Please select an image file.';
+                return;
+            }
+
+            statusElement.textContent = 'Processing...';
+            predictionResultElement.textContent = 'Waiting for prediction...';
+            confidenceElement.textContent = 'Confidence: -';
+            resetBinStyles();
+
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+                const base64Image = reader.result;
+                try {
+                    const response = await fetch('/predict', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ image: base64Image }),
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    predictionResultElement.textContent = `Prediction: ${result.prediction}`;
+                    confidenceElement.textContent = `Confidence: ${result.confidence.toFixed(2)}`;
+                    statusElement.textContent = 'Prediction complete.';
+                    highlightBin(result.prediction);
+
+                } catch (error) {
+                    console.error('Error during prediction:', error);
+                    statusElement.textContent = `Error: ${error.message}`;
+                    predictionResultElement.textContent = 'Prediction failed.';
+                    confidenceElement.textContent = 'Confidence: -';
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function resetBinStyles() {
+            Object.values(bins).forEach(bin => {
+                bin.style.backgroundColor = '#e9e9e9';
+                bin.style.borderColor = '#ccc';
+            });
+            Object.values(arrows).forEach(arrow => {
+                arrow.style.visibility = 'hidden';
+            });
+        }
+
+        function highlightBin(predictedClass) {
+            resetBinStyles();
+            if (bins[predictedClass]) {
+                bins[predictedClass].style.backgroundColor = '#c8e6c9';
+                bins[predictedClass].style.borderColor = '#4CAF50';
+                if (arrows[predictedClass]) {
+                    arrows[predictedClass].style.visibility = 'visible';
+                }
+            }
+        }
+    </script>
+</body>
+</html>

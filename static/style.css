@@ -1,0 +1,115 @@
+body {
+    font-family: sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f4f4;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 30px;
+}
+
+.container {
+    display: flex;
+    justify-content: space-around;
+    width: 90%;
+    max-width: 1200px;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.camera-feed,
+.prediction-area {
+    width: 48%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+video {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #000;
+}
+
+#status {
+    margin-top: 10px;
+    font-style: italic;
+    color: #666;
+}
+
+#prediction-result {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-top: 20px;
+    min-height: 1.5em; /* Prevent layout shift */
+}
+
+#confidence {
+    color: #555;
+    margin-bottom: 30px;
+}
+
+.bins-container {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.bin {
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    padding: 15px;
+    text-align: center;
+    width: 22%; /* Adjust as needed */
+    background-color: #e9e9e9;
+    position: relative; /* Needed for absolute positioning of arrow */
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.bin span {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.arrow {
+    font-size: 2em;
+    visibility: hidden; /* Hide arrows by default */
+    position: absolute;
+    bottom: -35px; /* Position below the bin */
+    left: 50%;
+    transform: translateX(-50%);
+    color: green;
+}
+
+/* Highlight style for the predicted bin */
+.bin.highlight {
+    background-color: #d4edda; /* Light green background */
+    border-color: #c3e6cb;
+}
+
+/* Specific bin colors (optional) */
+#Hazardous.highlight {
+    background-color: #f8d7da; /* Light red */
+    border-color: #f5c6cb;
+}
+#Non-Recyclable.highlight {
+    background-color: #e2e3e5; /* Light gray */
+    border-color: #d6d8db;
+}
+#Organic.highlight {
+    background-color: #fff3cd; /* Light yellow/brown */
+    border-color: #ffeeba;
+}
+#Recyclable.highlight {
+    background-color: #d1ecf1; /* Light blue */
+    border-color: #bee5eb;
+}
