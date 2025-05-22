@@ -86,11 +86,42 @@ def classify_image():
         return jsonify({'error': 'No image uploaded'}), 400
 
     image = Image.open(request.files['image'].stream)
+    # Convert the image to RGB if it's not already
+    if image.mode != 'RGB':
+        image = image.convert('RGB')
+    # Resize the image to the model's expected input size
+    image = image.resize((640, 640))
+    # Convert the image to a format suitable for the model
+    image = image.convert('RGB')
     results = model(image)
 
     label = results[0].names[int(results[0].boxes.cls[0])] if results[0].boxes else "Unknown"
+    confidence = results[0].boxes.conf[0] if results[0].boxes else 0.0
+    confidence = int(confidence * 100)
+    confidence = min(max(confidence, 0), 100)
+    print(f"Detected: {label} with confidence: {confidence}%")
+    # Check if the label is empty or None
+    if not label:
+        return jsonify({'error': 'No label detected'}), 400
+    # Check if the confidence is within a valid range
+    if confidence < 0 or confidence > 100:
+        return jsonify({'error': 'Invalid confidence level'}), 400
+    # Check if the label is a string
+    if not isinstance(label, str):
+        return jsonify({'error': 'Invalid label type'}), 400
+    # Check if the label is too long
+    if len(label) > 50:
+        return jsonify({'error': 'Label too long'}), 400
+    # Check if the label contains invalid characters
+    if not all(c.isalnum() or c.isspace() for c in label):
+        return jsonify({'error': 'Label contains invalid characters'}), 400
+    # Check if the label is a known category
+    known_categories = ['plastic', 'paper', 'metal', 'glass', 'organic']
+    if label.lower() not in known_categories:
+        return jsonify({'error': 'Unknown category'}), 400
+    
 
-  
+    # Use the label to get a waste disposal instruction
     prompt = f"Give a waste disposal instruction for '{label}'"
     response = ollama.chat(model='llama3.2:latest', messages=[{'role': 'user', 'content': prompt}])
 
