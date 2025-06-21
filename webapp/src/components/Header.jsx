@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { useAuth } from '../context/AuthContext'
 
-const Header = ({ onInfoClick, onDashboardClick }) => {
+const Header = ({ onInfoClick, onDashboardClick, onAuthClick, onProfileClick }) => {
   const [isScrolled, setIsScrolled] = useState(false)
+  const { currentUser, logout } = useAuth()
   
   useEffect(() => {
     const handleScroll = () => {
@@ -12,6 +14,14 @@ const Header = ({ onInfoClick, onDashboardClick }) => {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
+  }
   
   return (
     <header 
@@ -66,6 +76,55 @@ const Header = ({ onInfoClick, onDashboardClick }) => {
             <span className="text-xl">ℹ️</span>
             <span className="hidden md:inline">Learn More</span>
           </button>
+
+          {/* Authentication Section */}
+          {currentUser ? (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onProfileClick}
+                className={`px-3 py-2 rounded-full transition-all duration-300 flex items-center gap-2 ${
+                  isScrolled 
+                    ? 'bg-gray-100 text-gray-800 hover:bg-gray-200' 
+                    : 'bg-white/20 text-white hover:bg-white/30'
+                }`}
+              >
+                <div className="w-6 h-6 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
+                  {currentUser.displayName ? currentUser.displayName.charAt(0).toUpperCase() : 'U'}
+                </div>
+                <span className="hidden md:inline text-sm font-medium">
+                  {currentUser.displayName || 'User'}
+                </span>
+              </button>
+              
+              <button
+                onClick={handleLogout}
+                className={`px-4 py-2 rounded-full transition-all duration-300 flex items-center gap-2 ${
+                  isScrolled 
+                    ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                    : 'bg-red-500 text-white hover:bg-red-600'
+                }`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                <span className="hidden md:inline">Logout</span>
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={onAuthClick}
+              className={`px-4 py-2 rounded-full transition-all duration-300 flex items-center gap-2 ${
+                isScrolled 
+                  ? 'bg-primary-500 text-white hover:bg-primary-600' 
+                  : 'bg-white/20 text-white hover:bg-white/30'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <span className="hidden md:inline">Sign In</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

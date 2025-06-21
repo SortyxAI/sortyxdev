@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePoints } from '../context/PointsContext';
+import { useAuth } from '../context/AuthContext';
 
 const Dashboard = ({ onClose }) => {
-  const { points, level, environmentalImpact, rewards, redeemReward } = usePoints();
+  const { points, level, environmentalImpact, rewards, redeemReward, addReward, loadingRewards } = usePoints();
+  const { isAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [redeemingReward, setRedeemingReward] = useState(null);
   
@@ -249,62 +251,72 @@ const Dashboard = ({ onClose }) => {
                 transition={{ duration: 0.2 }}
               >
                 {/* Rewards content */}
+                {isAdmin ? (
+                  <AddRewardForm addReward={addReward} />
+                ) : (
+                  <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-center text-sm">
+                    Only admins can create new rewards. You can view and redeem available rewards below.
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {rewards.map((reward) => (
-                    <div 
-                      key={reward.id}
-                      className={`rounded-xl p-6 border shadow-sm ${
-                        reward.unlocked 
-                          ? reward.redeemed 
-                            ? 'bg-gray-100 border-gray-300' 
-                            : 'bg-white border-primary-200' 
-                          : 'bg-gray-100 border-gray-200'
-                      }`}
-                    >
-                      <div className="flex items-start">
-                        <div className="text-4xl mr-4">{reward.image}</div>
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-800 mb-1">{reward.title}</h3>
-                          <p className="text-sm text-gray-600 mb-3">{reward.description}</p>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              <span className="text-sm font-medium text-primary-600 mr-1">
-                                {reward.pointsCost}
-                              </span>
-                              <span className="text-xs text-gray-500">points</span>
+                  {loadingRewards ? (
+                    <p>Loading rewards...</p>
+                  ) : (
+                    rewards
+                      .filter(reward => isAdmin ? !reward.isDefault : true)
+                      .map((reward) => (
+                        <div 
+                          key={reward.id}
+                          className={`rounded-xl p-6 border shadow-sm ${
+                            reward.unlocked 
+                              ? reward.redeemed 
+                                ? 'bg-gray-100 border-gray-300' 
+                                : 'bg-white border-primary-200' 
+                              : 'bg-gray-100 border-gray-200'
+                          }`}
+                        >
+                          <div className="flex items-start">
+                            <div className="text-4xl mr-4">{reward.image}</div>
+                            <div className="flex-1">
+                              <h3 className="text-lg font-semibold text-gray-800 mb-1">{reward.title}</h3>
+                              <p className="text-sm text-gray-600 mb-3">{reward.description}</p>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                  <span className="text-sm font-medium text-primary-600 mr-1">
+                                    {reward.pointsCost}
+                                  </span>
+                                  <span className="text-xs text-gray-500">points</span>
+                                </div>
+                                {reward.redeemed ? (
+                                  <span className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-medium">
+                                    Redeemed
+                                  </span>
+                                ) : reward.unlocked ? (
+                                  <button
+                                    onClick={() => handleRedeemClick(reward)}
+                                    className="px-4 py-1.5 bg-primary-600 text-white rounded-full text-sm font-medium hover:bg-primary-700 transition-colors"
+                                  >
+                                    Redeem
+                                  </button>
+                                ) : (
+                                  <span className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-medium">
+                                    Locked
+                                  </span>
+                                )}
+                              </div>
+                              {!reward.unlocked && (
+                                <div className="mt-3 w-full bg-gray-200 rounded-full h-1.5">
+                                  <div 
+                                    className="bg-primary-500 h-1.5 rounded-full" 
+                                    style={{ width: `${Math.min(100, (points / reward.pointsCost) * 100)}%` }}
+                                  ></div>
+                                </div>
+                              )}
                             </div>
-                            
-                            {reward.redeemed ? (
-                              <span className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-medium">
-                                Redeemed
-                              </span>
-                            ) : reward.unlocked ? (
-                              <button
-                                onClick={() => handleRedeemClick(reward)}
-                                className="px-4 py-1.5 bg-primary-600 text-white rounded-full text-sm font-medium hover:bg-primary-700 transition-colors"
-                              >
-                                Redeem
-                              </button>
-                            ) : (
-                              <span className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-medium">
-                                Locked
-                              </span>
-                            )}
                           </div>
-                          
-                          {!reward.unlocked && (
-                            <div className="mt-3 w-full bg-gray-200 rounded-full h-1.5">
-                              <div 
-                                className="bg-primary-500 h-1.5 rounded-full" 
-                                style={{ width: `${Math.min(100, (points / reward.pointsCost) * 100)}%` }}
-                              ></div>
-                            </div>
-                          )}
                         </div>
-                      </div>
-                    </div>
-                  ))}
+                      ))
+                  )}
                 </div>
               </motion.div>
             )}
@@ -392,6 +404,93 @@ const Dashboard = ({ onClose }) => {
         )}
       </AnimatePresence>
     </div>
+  );
+};
+
+const AddRewardForm = ({ addReward }) => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [pointsCost, setPointsCost] = useState('');
+  const [image, setImage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!title || !description || !pointsCost || !image) {
+      setError('Please fill out all fields.');
+      return;
+    }
+    setError('');
+    setSubmitting(true);
+    try {
+      await addReward({
+        title,
+        description,
+        pointsCost: parseInt(pointsCost, 10),
+        image,
+        unlocked: false,
+        redeemed: false,
+      });
+      setTitle('');
+      setDescription('');
+      setPointsCost('');
+      setImage('');
+    } catch (err) {
+      setError('Failed to add reward. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-gray-50 rounded-xl p-6 border border-gray-200 mb-6"
+    >
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">Add New Reward</h3>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error && <p className="text-red-500 text-sm">{error}</p>}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input
+            type="text"
+            placeholder="Reward Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+          />
+          <input
+            type="number"
+            placeholder="Points Cost"
+            value={pointsCost}
+            onChange={(e) => setPointsCost(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+          />
+        </div>
+        <textarea
+          placeholder="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+          rows="2"
+        />
+        <input
+            type="text"
+            placeholder="Image (Emoji or URL)"
+            value={image}
+            onChange={(e) => setImage(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+        />
+        <button
+          type="submit"
+          disabled={submitting}
+          className="w-full bg-primary-500 text-white py-2 px-4 rounded-lg hover:bg-primary-600 disabled:opacity-50"
+        >
+          {submitting ? 'Adding...' : 'Add Reward'}
+        </button>
+      </form>
+    </motion.div>
   );
 };
 

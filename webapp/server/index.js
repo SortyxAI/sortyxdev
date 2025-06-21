@@ -2,6 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+import { verifyAdmin } from './firebase-admin.js';
+import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+const db = getFirestore();
 
 dotenv.config();
 
@@ -130,9 +135,6 @@ Confidence: [number]`;
 
 app.post('/api/classify', async (req, res) => {
   try {
-    // Log the entire request body to see what's being received
-    // console.log('Request body keys:', Object.keys(req.body));
-    
     const { imageData } = req.body;
     
     if (!imageData) {
@@ -147,13 +149,8 @@ app.post('/api/classify', async (req, res) => {
       ? imageData.split('base64,')[1] 
       : imageData;
     
-    // console.log('Using imageData, length:', base64Image.length);
-
     // Process the image with Gemini
     const result = await classifyWaste(base64Image);
-
-    // Add debugging to see the result
-    // console.log('Classification result:', JSON.stringify(result, null, 2));
 
     // Map component categories to our defined waste categories
     const mappedComponents = result.components.map(component => {
@@ -183,7 +180,6 @@ app.post('/api/classify', async (req, res) => {
       confidence: result.confidence,
     };
     
-    // console.log('Sending response:', JSON.stringify(response, null, 2));
     res.json(response);
   } catch (err) {
     console.error('Error in classification:', err);
@@ -198,6 +194,44 @@ app.post('/api/classify', async (req, res) => {
 
 app.get('/api/categories', (req, res) => {
   res.json({ success: true, categories: wasteCategories });
+});
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    success: true, 
+    message: 'Sortyx API is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Admin-only endpoint to add rewards
+app.post('/api/admin/rewards', verifyAdmin, async (req, res) => {
+  try {
+    const { title, description, pointsCost, image } = req.body;
+
+    if (!title || !description || pointsCost === undefined || !image) {
+      return res.status(400).json({ error: 'Missing required reward fields.' });
+    }
+
+    const newReward = {
+      title,
+      description,
+      pointsCost: Number(pointsCost),
+      image,
+      createdAt: Timestamp.now(),
+    };
+
+    const docRef = await db.collection('rewards').add(newReward);
+
+    res.status(201).json({ success: true, id: docRef.id, ...newReward });
+  } catch (err) {
+    console.error("Error creating reward:", err);
+    res.status(500).json({ 
+      error: 'Failed to create reward on the server.',
+      details: err.message 
+    });
+  }
 });
 
 app.listen(PORT, () => {
