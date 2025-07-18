@@ -10,11 +10,13 @@ import ClassificationResult from './components/ClassificationResult';
 import Dashboard from './components/Dashboard';
 import AuthModal from './components/AuthModal';
 import UserProfile from './components/UserProfile';
+import QrScannerModal from './components/QrScannerModal';
 
 function App() {
   const [showDashboard, setShowDashboard] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showQrScanner, setShowQrScanner] = useState(false);
   
   const handleInfoClick = () => {
     // Handle info panel opening logic here
@@ -33,6 +35,14 @@ function App() {
     setShowProfileModal(prev => !prev);
   };
 
+  const handleQrScanClick = () => {
+    setShowQrScanner(true);
+  };
+
+  const handleCloseQrScanner = () => {
+    setShowQrScanner(false);
+  };
+
   return (
     <AuthProvider>
       <PointsProvider>
@@ -44,10 +54,11 @@ function App() {
               onDashboardClick={toggleDashboard}
               onAuthClick={toggleAuthModal}
               onProfileClick={toggleProfileModal}
+              onQrScanClick={handleQrScanClick}
             />
             
             <main className="container mx-auto px-4 py-20 relative z-10">
-              <DetectionContainer />
+              {!showQrScanner && <DetectionContainer />}
               <ClassificationResult />
             </main>
             
@@ -70,6 +81,11 @@ function App() {
               <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
                 <UserProfile onClose={toggleProfileModal} />
               </div>
+            )}
+
+            {/* QR Scanner Modal */}
+            {showQrScanner && (
+              <QrScannerModal onClose={handleCloseQrScanner} />
             )}
           </div>
         </WasteProvider>

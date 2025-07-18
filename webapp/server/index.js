@@ -66,7 +66,7 @@ const wasteCategories = [
 ];
 
 // Gemini setup
-const genAI = new GoogleGenerativeAI("AIzaSyC6zSYRumGI1yQemEvz58LxqlEcvpiIbLQ");
+const genAI = new GoogleGenerativeAI("AIzaSyBhwL48QLKVaaEX8JZEzgpfT4dsAXUhwuY");
 
 async function classifyWaste(imageBase64) {
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });

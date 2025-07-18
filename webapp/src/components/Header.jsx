@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 
-const Header = ({ onInfoClick, onDashboardClick, onAuthClick, onProfileClick }) => {
+const Header = ({ onInfoClick, onDashboardClick, onAuthClick, onProfileClick, onQrScanClick }) => {
   const [isScrolled, setIsScrolled] = useState(false)
   const { currentUser, logout } = useAuth()
   
@@ -63,6 +63,25 @@ const Header = ({ onInfoClick, onDashboardClick, onAuthClick, onProfileClick }) 
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
             <span className="hidden md:inline">Dashboard</span>
+          </button>
+
+          {/* QR Code Scan Button */}
+          <button
+            onClick={onQrScanClick}
+            className={`px-4 py-2 rounded-full transition-all duration-300 flex items-center gap-2 ${
+              isScrolled 
+                ? 'bg-primary-100 text-primary-800 hover:bg-primary-200' 
+                : 'bg-yellow-500 text-white hover:bg-white/20'
+            }`}
+            aria-label="Scan QR Code"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <rect x="3" y="3" width="7" height="7" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
+              <rect x="14" y="3" width="7" height="7" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
+              <rect x="14" y="14" width="7" height="7" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
+              <rect x="3" y="14" width="7" height="7" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
+            </svg>
+            <span className="hidden md:inline">Scan QR</span>
           </button>
           
           <button
